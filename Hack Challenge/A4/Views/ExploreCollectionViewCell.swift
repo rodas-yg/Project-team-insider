@@ -193,7 +193,7 @@ class ExploreCollectionViewCell: UICollectionViewCell {
         
         hours.snp.makeConstraints { make in
             make.top.equalTo(desc.snp.bottom).offset(8)
-            make.leading.equalTo(reviews.snp.trailing).offset(16)
+            make.leading.equalTo(reviews.snp.trailing).offset(32)
         }
     }
     
