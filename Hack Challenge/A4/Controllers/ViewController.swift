@@ -158,7 +158,7 @@ class ViewController: UIViewController {
         // TODO: Set Up CollectionView
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
-        layout.minimumLineSpacing = 32
+        layout.minimumLineSpacing = 40
         layout.minimumInteritemSpacing = 16
         
         // Initialize collectionView using the layout
