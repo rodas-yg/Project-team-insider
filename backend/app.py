@@ -138,7 +138,11 @@ def delete_review(review_id):
     return jsonify({"success": True, "message": "Review deleted"})
 
 
+<<<<<<< Updated upstream
 # ------ interviews ---
+=======
+# -------- INTERVIEWS
+>>>>>>> Stashed changes
 
 # Get interview experiences for team
 @app.route("/teams/<int:team_id>/interviews", methods=["GET"])
@@ -168,7 +172,11 @@ def create_interview(team_id):
     return jsonify({"success": True, "data": new_interview}), 201
 
 
+<<<<<<< Updated upstream
 # -------TAGss
+=======
+#  TAGS --------
+>>>>>>> Stashed changes
 
 # Get all tags
 @app.route("/tags", methods=["GET"])
