@@ -214,7 +214,7 @@ def create_tag():
 def assign_tag(team_id):
     data = request.get_json()
     tag_id = data.get("tag_id")
-
+    teams = Team.query.all()
     for team in teams:
         if team["id"] == team_id:
             team["tags"].append(tag_id)
