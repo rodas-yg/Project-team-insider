@@ -1,54 +1,39 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
-from moderation import moderate_text  # AI moderation function
+from moderation import moderate_text
 from config import Config
-from auth import auth_bp
-from db import db, User, Team, Review, Interview
-
-
+from db import db, User, Team, Review, Interview, Tag
 
 app = Flask(__name__)
 CORS(app)
 app.config.from_object(Config)
-app.register_blueprint(auth_bp)
 
-# --- MVP DB initialization ---
+
 db.init_app(app)
 with app.app_context():
     db.create_all()
 
-app = Flask(__name__)
-CORS(app)
-
-app = Flask(__name__)
-CORS(app)
-
-# Temporary in-memory storage
-tags = []
-
-team_id_counter = 1
-review_id_counter = 1
-interview_id_counter = 1
-tag_id_counter = 1
 
 
-#  TEAMS --------
+
+#  TEAMS
 
 # Get all teams
 @app.route("/teams", methods=["GET"])
 def get_teams():
     teams = Team.query.all()
-    return jsonify({"success": True, "data": teams})
+    sorted_teams = sorted(teams, key=lambda t: len(t.reviews), reverse=True)
+    return jsonify({"success": True, "data": [t.serialize() for t in sorted_teams]})
 
 # Create new team
 @app.route("/teams", methods=["POST"])
 def create_team():
     data = request.get_json()
-
+    
     team = Team(
         name=data.get("name"),
-        description=data.get("description")
+        description=data.get("description"),
     )
     db.session.add(team)
     db.session.commit()
@@ -63,12 +48,11 @@ def get_team(team_id):
         return jsonify({"success": False, "error": "Team not found"}), 404
     return jsonify({"success": True, "data": team.serialize()})
 
-
 # REVIEWS 
 
 # Get all reviews for a team
 @app.route("/teams/<int:team_id>/reviews", methods=["GET"])
-def get_reviews_for_team(team_id):
+def get_reviews_for_a_team(team_id):
     team = Team.query.get(team_id)
     if not team:
         return jsonify({"success": False, "error": "Team not found"}), 404
@@ -81,7 +65,6 @@ def get_reviews_for_team(team_id):
 # Create review with moderation
 @app.route("/teams/<int:team_id>/reviews", methods=["POST"])
 def create_review(team_id):
-    global review_id_counter
     data = request.get_json()
 
     full_text = " ".join(data.get("list_of_pros", [])) + " " + " ".join(data.get("list_of_cons", []))
@@ -94,22 +77,20 @@ def create_review(team_id):
             "moderation": moderation_result
         }), 403
 
-    new_review = {
-        "id": review_id_counter,
-        "team_id": team_id,
-        "star_rating": data.get("star_rating"),
-        "likes": 0,
-        "time_commitment": data.get("time_commitment"),
-        "list_of_pros": data.get("list_of_pros"),
-        "list_of_cons": data.get("list_of_cons"),
-        "moderation": moderation_result,
-        "date_posted": datetime.utcnow().isoformat()
-    }
+    review = Review(
+        star_rating=data.get("star_rating"),
+        time_commitment=data.get("time_commitment"),
+        list_of_pros=data.get("list_of_pros", []),
+        list_of_cons=data.get("list_of_cons", []),
+        team_id=team_id,
+        user_id=data.get("user_id")
+    )
 
-    db.session.add(new_review)
+
+    db.session.add(review)
     db.session.commit()
 
-    return jsonify({"success": True, "data": new_review.serialize()}), 201
+    return jsonify({"success": True, "data": review.serialize()}), 201
 
 
 # Get all reviews (global)
@@ -139,7 +120,7 @@ def unlike_review(review_id):
     if not review:
         return jsonify({"success": False, "error": "Review not found"}), 404
 
-    review.likes = max(0, review.likes - 1)
+    review.likes = review.likes - 1 if review.likes > 0 else 0
     db.session.commit()
 
 
@@ -174,15 +155,22 @@ def get_interviews(team_id):
 def create_interview(team_id):
     data = request.get_json()
 
-    interview = {
-        "id": interview_id_counter,
-        "team_id": team_id,
-        "difficulty_rating": data.get("difficulty_rating"),
-        "experience_desc": data.get("experience_desc"),
-        "tips": data.get("tips"),
-        "accepted": data.get("accepted"),
-        "date_posted": datetime.utcnow().isoformat()
-    }
+    team = Team.query.get(team_id)
+    if not team:
+        return jsonify({"success": False, "error": "Team not found"}), 404
+
+    user_id = data.get("user_id")
+    if user_id is None:
+        return jsonify({"success": False, "error": "user_id is required"}), 400
+
+    interview = Interview(
+        difficulty_rating=data.get("difficulty_rating"),
+        experience_desc=data.get("experience_desc"),
+        tips=data.get("tips"),
+        accepted=data.get("accepted"),
+        team_id=team_id,
+        user_id=user_id,
+    )
 
     db.session.add(interview)
     db.session.commit()
@@ -191,39 +179,58 @@ def create_interview(team_id):
 
 
 
-
 # Get all tags
 @app.route("/tags", methods=["GET"])
-def get_tags():
-    return jsonify({"success": True, "data": tags})
+def get_tags(): 
+    tags = Tag.query.all()
+    return jsonify({"success": True, "data": [t.serialize() for t in tags]})
 
 # Create new tag
 @app.route("/tags", methods=["POST"])
 def create_tag():
-    global tag_id_counter
     data = request.get_json()
+    tag_name = data.get("name")
+    if not tag_name:
+        return jsonify({"success": False, "error": "Tag name required"}), 400
 
-    new_tag = {"id": tag_id_counter, "name": data.get("name")}
-    tags.append(new_tag)
-    tag_id_counter += 1
-
-    return jsonify({"success": True, "data": new_tag}), 201
+    existing = Tag.query.filter_by(name=tag_name).first()
+    if existing:
+        return jsonify({"success": True, "data": existing.serialize()}), 200
+    tag = Tag(
+        name = data.get("name"),
+    )
+    db.session.add(tag)
+    db.session.commit()
+    return jsonify({"success": True, "data": tag.serialize()}), 201
 
 # Assign tag to team
 @app.route("/teams/<int:team_id>/tags", methods=["POST"])
 def assign_tag(team_id):
     data = request.get_json()
     tag_id = data.get("tag_id")
-    teams = Team.query.all()
-    for team in teams:
-        if team["id"] == team_id:
-            team["tags"].append(tag_id)
-            return jsonify({"success": True, "data": team})
+    teams = Team.query.get(team_id)
+    tag = Tag.query.get(tag_id)
+    if not teams:
+        return jsonify({"success": False, "error": "Team not found"}), 404
+    
+    if tag not in teams.tags:
+        teams.tags.append(tag)
+        db.session.commit()
+    
 
-    return jsonify({"success": False, "error": "Team not found"}), 404
+    return jsonify({"success": True, "data": teams.serialize()}), 200
 
 
+@app.route("/tags/<string:tag_name>/teams", methods=["GET"])
+def get_teams_by_tag(tag_name):
+    tag = Tag.query.filter_by(name=tag_name).first()
 
+    if not tag:
+        return jsonify({"success": False, "error": "Tag not found"}), 404
+
+    teams = tag.teams
+    sorted_teams = sorted(teams, key=lambda t: len(t.reviews), reverse=True)
+    return jsonify({"success": True, "data": [t.serialize() for t in sorted_teams]})
 
 if __name__ == "__main__":
     app.run(debug=True)

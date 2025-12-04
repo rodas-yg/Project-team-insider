@@ -3,6 +3,12 @@ from sqlalchemy.sql import func
 
 db = SQLAlchemy()
 
+# this is an association table for many-to-many relationship between Team and Tag
+team_tag = db.Table(
+"team_tag",
+    db.Column("team_id", db.Integer, db.ForeignKey("team.id"), primary_key=True),
+    db.Column("tag_id", db.Integer, db.ForeignKey("tag.id"), primary_key=True)
+)
 
 class Review(db.Model):
     """
@@ -18,7 +24,7 @@ class Review(db.Model):
     list_of_pros = db.Column(db.JSON, nullable=False)
     list_of_cons = db.Column(db.JSON, nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey("team.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
 
     team = db.relationship("Team", back_populates="reviews")
     user = db.relationship("User", back_populates="reviews")
@@ -206,6 +212,8 @@ class Team(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.Text, nullable=False)
+    
+    tags = db.relationship("Tag", secondary = "team_tag", backref = "team")  #??-------
 
     reviews = db.relationship("Review", back_populates="team", cascade="delete")
     interviews = db.relationship("Interview", back_populates="team", cascade="delete")
@@ -216,6 +224,25 @@ class Team(db.Model):
         """
         self.name = kwargs.get("name")
         self.description = kwargs.get("description")
+        self.tags = []
+
+    # Helper method to compute stats
+    def _compute_stats(self):
+        num_reviews = len(self.reviews)
+
+        if num_reviews == 0:
+            return {
+                "review_count": 0,
+                "avg_star_rating": None
+            }
+
+        avg_star = sum(r.star_rating for r in self.reviews) / num_reviews
+
+        return {
+            "review_count": num_reviews,
+            "avg_star_rating": avg_star
+        }
+
 
     def serialize(self):
         """
@@ -225,6 +252,33 @@ class Team(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
+            "tags": [t.serialize() for t in self.tags],
             "reviews": [review.serialize() for review in self.reviews],
+            "reviews_count": len(self.reviews),
+            "interviews_count": len(self.interviews),
             "interviews": [interview.serialize() for interview in self.interviews]
         }
+
+
+class Tag(db.Model):
+    """
+    a model to represent tags associated with teams
+    """
+    __tablename__ = 'tag'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String, nullable=False)
+    def __init__(self, **kwargs):
+        """
+        Initialize Tag object
+        """
+        self.name = kwargs.get("name")
+    def serialize(self):
+        """
+        Serialize Tag object
+        """
+        return {
+            "id": self.id,
+            "name": self.name
+        }
+
+
