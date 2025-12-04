@@ -27,6 +27,7 @@ class DetailViewController: UIViewController {
     private let reviews = UILabel()
     private let hours = UILabel()
     private let descLabel = UILabel()
+    private let createPostButton = UIButton()
     private var postCollectionView: UICollectionView!
     
     private var bookmarkButton: UIBarButtonItem!
@@ -130,6 +131,7 @@ class DetailViewController: UIViewController {
         setupHours()
         setupDescription()
         setupBookmark()
+        setupCreatePostButton()
         setupPostCollectionView()
     }
     
@@ -407,6 +409,25 @@ class DetailViewController: UIViewController {
             make.top.equalTo(reviews.snp.bottom).offset(16)
             make.leading.equalToSuperview().offset(32)
             make.trailing.equalToSuperview().offset(-32)
+        }
+    }
+    
+    func setupCreatePostButton() {
+        createPostButton.backgroundColor = UIColor.a4.darkBlue
+        createPostButton.layer.cornerRadius = 4
+        createPostButton.setTitle(" Visit Site", for: .normal)
+        createPostButton.setTitleColor(UIColor.a4.white, for: .normal)
+        createPostButton.tintColor = UIColor.a4.white
+        createPostButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .bold)
+//        createPostButton.addTarget(self, action: #selector(createPost), for: .touchUpInside)
+        createPostButton.contentEdgeInsets = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 8)
+
+        view.addSubview(createPostButton)
+        createPostButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        createPostButton.snp.makeConstraints { make in
+            createPostButton.top.equalTo(descLabel.snp.bottom).offset(24)
+            createPostButton.trailing.equalToSuperview().offset(-32)
         }
     }
     
