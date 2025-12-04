@@ -98,16 +98,14 @@ class DetailViewController: UIViewController {
         let white = UIColor.a4.white.cgColor
         
         gradientLayer.colors = [
-            darkdarkBlue,      // Top: Dark blue
+            darkdarkBlue,
             darkBlue,
-            lightBlue,     // Quick transition to light blue
-            white,         // White starts EARLY
-            white          // Rest is white
+            lightBlue,
+            white,
+            white
         ]
-        
-        // ⭐️ CRITICAL: Adjust these values! Lower numbers = higher up
-        // 0 = top of screen, 1 = bottom of screen
-        gradientLayer.locations = [0, 0.15, 0.25, 0.33, 1]  // ⭐️ White starts at 25% down!
+
+        gradientLayer.locations = [0, 0.15, 0.25, 0.5, 1]
         
         gradientLayer.frame = view.bounds
         view.layer.insertSublayer(gradientLayer, at: 0)
