@@ -62,7 +62,6 @@ class CreatePostViewController: UIViewController {
     private let team: Team
     
     init(post: Post, team: Team, overallRatingText: String, diffRatingText: String, majorRatingText: String, memberText: String, yearAppText: String, hoursText: String, messageText: String, delegate: UpdateTextDelegate){
-        self.post = post
         self.team = team
         self.overallRatingText = overallRatingText
         self.diffRatingText = diffRatingText
@@ -101,15 +100,15 @@ class CreatePostViewController: UIViewController {
         
         configureView()
         setupTitleLabel()
-        setupMajor()
-        setupMembershipLabel()
-        setupYears()
-        setupHours()
-        setupMessageField()
-        setupOverallRating()
-        setupDiffRating()
-        setupCancelButton()
-        setupPostButton()
+//        setupMajor()
+//        setupMembershipLabel()
+//        setupYears()
+//        setupHours()
+//        setupMessageField()
+//        setupOverallRating()
+//        setupDiffRating()
+//        setupCancelButton()
+//        setupPostButton()
     }
 
     // MARK: - Set Up Views
@@ -199,7 +198,7 @@ class CreatePostViewController: UIViewController {
         cancelButton.setTitle("Post", for: .normal)
         cancelButton.setTitleColor(UIColor.a4.white, for: .normal)
         cancelButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
-        cancelButton.addTarget(self, action: #selector(createPost), for: .touchUpInside)
+        cancelButton.addTarget(self, action: #selector(tapBack), for: .touchUpInside)
 
         contentView.addSubview(cancelButton)
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
@@ -217,5 +216,23 @@ class CreatePostViewController: UIViewController {
         }
     }
     */
+    
+    @objc private func popVC() {
+        // let saveVC = ProfileVC()
+        navigationController?.popViewController(animated: true)
+        delegate?.updateText(
+            newOverallRatingText: overallRatingTextField.text ?? "",
+            newDiffRatingText: diffRatingTextField.text ?? "",
+            newMajorText: majorTextField.text ?? "",
+            newMemberText: memberTextField.text ?? "",
+            newYearAppText: yearsAppTextField.text ?? "",
+            newHoursText: hoursTextField.text ?? "",
+            newMessageText: messageTextField.text ?? ""
+        )
+    }
+    
+    @objc private func tapBack() {
+        navigationController?.popViewController(animated: true)
+    }
 
 }
