@@ -2,12 +2,9 @@ version: "3.9"
 
 services:
   backend:
+    image: rodas10/cupofteams-backend
     build: .
-    container_name: cup-of-teams-backend
     ports:
       - "5000:5000"
     env_file:
       - .env
-    volumes:
-      - ./app.db:/app/app.db
-    restart: always
