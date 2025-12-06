@@ -5,6 +5,7 @@ from moderation import moderate_text
 from config import Config
 from db import db, User, Team, Review, Interview, Tag
 from teams import initial_teams
+
 app = Flask(__name__)
 CORS(app)
 app.config.from_object(Config)
@@ -123,7 +124,8 @@ def create_review(team_id):
     time_commitment=data.get("time_commitment"),
     review=data.get("review"),
     team_id=team_id,
-    user_id=user.id
+    user_id=user.id,
+    major=data.get("major")
     )   
 
 

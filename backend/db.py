@@ -21,7 +21,7 @@ class Review(db.Model):
     likes = db.Column(db.Integer, nullable=True, default=0)
     date_posted = db.Column(db.DateTime, nullable=False, server_default=func.now())
     time_commitment = db.Column(db.String, nullable=False)
-
+    major = db.Column(db.String, nullable=True)
     review = db.Column(db.JSON, nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey("team.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
@@ -39,6 +39,7 @@ class Review(db.Model):
         self.review = kwargs.get("review", [])
         self.team_id = kwargs.get("team_id")
         self.user_id = kwargs.get("user_id")
+        self.major = kwargs.get("major")
 
     def serialize(self):
         """
@@ -102,7 +103,7 @@ class Interview(db.Model):
         """
         Initialize Interview object
         """
-        self.difficulty_rating = kwargs.get("difficulty_rating")
+        self.difficulty_rating = round(kwargs.get("difficulty_rating"),2)
         self.experience_desc = kwargs.get("experience_desc")
         self.tips = kwargs.get("tips")
         self.team_id = kwargs.get("team_id")
