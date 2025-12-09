@@ -14,4 +14,3 @@ class Config:
 	
 	API_KEY = os.getenv("API_KEY")
 
-	# Other config options can be added here
